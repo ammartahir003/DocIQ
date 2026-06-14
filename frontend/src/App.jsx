@@ -9,6 +9,16 @@ export default function App() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [token, setToken] = useState(localStorage.getItem('token') || '')
+  const [showLogin, setShowLogin] = useState(!localStorage.getItem('token'))
+
+async function handleLogin(username, password) {
+  const res = await axios.post('/api/accounts/login/', { username, password })
+  const t = res.data.access
+  setToken(t)
+  localStorage.setItem('token', t)
+  setShowLogin(false)
+}
 
   async function handleUpload() {
     if (!file) return
@@ -16,6 +26,10 @@ export default function App() {
     setSummary("")
     setMessages([])
     setDocId(null)
+
+    const res = await axios.post('/api/documents/upload/', form, {
+  headers: { Authorization: `Bearer ${token}` }
+})
 
     const form = new FormData()
     form.append("file", file)
@@ -37,6 +51,11 @@ export default function App() {
     setQuestion("")
     setMessages(prev => [...prev, { role: "user", content: q }])
     setLoading(true)
+
+    const res = await axios.post(`/api/documents/${docId}/chat/`, 
+  { question: q },
+  { headers: { Authorization: `Bearer ${token}` } }
+)
 
     try {
       const res = await axios.post(`/api/documents/${docId}/chat/`, { question: q })
