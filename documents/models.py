@@ -7,9 +7,11 @@ class Document(models.Model):
     filename = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     summary = models.TextField(blank=True)
+    extracted_data = models.JSONField(blank=True, null=True)
 
     def __str__(self):
         return self.filename
+
 
 class ChatMessage(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='messages')
