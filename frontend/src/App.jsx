@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import axios from "axios"
+import Landing from "./Landing"
 
 const api = (token) => ({ headers: { Authorization: `Bearer ${token}` } })
 
@@ -267,13 +268,40 @@ export default function App() {
     localStorage.setItem('theme', next)
   }
 
-  useEffect(()=>{ if(token) fetchDocs() },[token])
+  const [subscription, setSubscription] = useState({ plan: 'free', status: 'active' })
+  const [upgrading, setUpgrading] = useState(false)
+
+  useEffect(()=>{ if(token) { fetchDocs(); fetchSubscription() } },[token])
+  useEffect(()=>{
+    if (window.location.pathname.includes('/billing/success')) {
+      fetchSubscription()
+      window.history.replaceState({}, '', '/')
+    }
+  },[])
   useEffect(()=>{ chatEndRef.current?.scrollIntoView({behavior:'smooth'}) },[messages])
   useEffect(()=>{ if(messages.length >= 2) setExtractedOpen(false) },[messages.length])
 
   async function fetchDocs() {
     try { const res = await axios.get('/api/documents/', api(token)); setDocs(res.data) }
     catch { logout() }
+  }
+
+  async function fetchSubscription() {
+    try {
+      const res = await axios.get('/api/billing/status/', api(token))
+      setSubscription(res.data)
+    } catch { /* ignore — not critical */ }
+  }
+
+  async function handleUpgrade() {
+    setUpgrading(true)
+    try {
+      const res = await axios.post('/api/billing/checkout/', {}, api(token))
+      window.location.href = res.data.checkout_url
+    } catch {
+      alert('Could not start checkout. Try again.')
+      setUpgrading(false)
+    }
   }
 
   async function loadChatHistory(docId) {
@@ -406,6 +434,8 @@ export default function App() {
     if(f?.type==='application/pdf') handleUpload(f)
   }
 
+  const [showLogin, setShowLogin] = useState(false)
+  if(!token && !showLogin) return <Landing onGetStarted={()=>setShowLogin(true)} />
   if(!token) return <LoginScreen onLogin={setToken} theme={theme} toggleTheme={toggleTheme} />
 
   return (
@@ -522,6 +552,37 @@ export default function App() {
             </svg>
             {exporting ? 'Exporting...' : selectMode && selectedIds.size > 0 ? `Export ${selectedIds.size} Selected` : 'Export to Excel'}
           </button>
+        </div>
+
+        <div style={{ padding:'10px 12px', borderTop:`1px solid ${t.border}`, flexShrink:0 }}>
+          {subscription.plan === 'pro' ? (
+            <div style={{
+              display:'flex', alignItems:'center', gap:'8px', padding:'9px 10px',
+              background: theme==='light' ? '#F5F3FF' : '#1E1B3A', border:`1px solid ${theme==='light' ? '#DDD6FE' : '#3730A3'}`,
+              borderRadius:'9px',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l2.4 7.2H22l-6 4.6 2.3 7.2-6.3-4.5L5.7 21l2.3-7.2-6-4.6h7.6z"/>
+              </svg>
+              <div>
+                <div style={{ fontSize:'12px', fontWeight:'600', color:t.accent }}>DocIQ Pro</div>
+                <div style={{ fontSize:'10px', color:t.textMuted }}>Unlimited documents</div>
+              </div>
+            </div>
+          ) : (
+            <button onClick={handleUpgrade} disabled={upgrading}
+              style={{
+                width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:'7px',
+                background: t.accent, border:'none', borderRadius:'9px', cursor:'pointer',
+                color:'#fff', fontSize:'12px', fontWeight:'600', padding:'10px 0', fontFamily:'Inter,sans-serif',
+                opacity: upgrading ? 0.7 : 1, transition:'opacity 0.15s',
+              }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l2.4 7.2H22l-6 4.6 2.3 7.2-6.3-4.5L5.7 21l2.3-7.2-6-4.6h7.6z"/>
+              </svg>
+              {upgrading ? 'Redirecting...' : 'Upgrade to Pro — $19/mo'}
+            </button>
+          )}
         </div>
 
         <div style={{ padding:'12px 16px', borderTop:`1px solid ${t.border}`, flexShrink:0 }}>

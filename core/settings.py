@@ -6,6 +6,10 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-926jsy7!par8n!%eojo6jr_xrar+06k6*8j5bmq7cm-y5+kx_g')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
@@ -21,6 +25,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'documents',
     'accounts',
+    'billing',
 ]
 
 MEDIA_URL = '/media/'
