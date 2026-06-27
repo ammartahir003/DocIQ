@@ -181,8 +181,8 @@ function LoginScreen({ onLogin, theme, toggleTheme }) {
     if (!username || !password) return
     setLoading(true); setError('')
     try {
-      if (mode === 'register') await axios.post('${API_URL}/api/accounts/register/', { username, password })
-      const res = await axios.post('${API_URL}/api/accounts/login/', { username, password })
+      if (mode === 'register') await axios.post(`${API_URL}/api/accounts/register/`, { username, password })
+      const res = await axios.post(`${API_URL}/api/accounts/login/`, { username, password })
       localStorage.setItem('token', res.data.access)
       onLogin(res.data.access)
     } catch { setError(mode === 'login' ? 'Invalid username or password.' : 'Registration failed. Username may already exist.') }
@@ -283,13 +283,13 @@ export default function App() {
   useEffect(()=>{ if(messages.length >= 2) setExtractedOpen(false) },[messages.length])
 
   async function fetchDocs() {
-    try { const res = await axios.get('${API_URL}/api/documents/', api(token)); setDocs(res.data) }
+    try { const res = await axios.get(`${API_URL}/api/documents/`, api(token)); setDocs(res.data) }
     catch { logout() }
   }
 
   async function fetchSubscription() {
     try {
-      const res = await axios.get('${API_URL}/api/billing/status/', api(token))
+      const res = await axios.get(`${API_URL}/api/billing/status/`, api(token))
       setSubscription(res.data)
     } catch { /* ignore — not critical */ }
   }
@@ -297,7 +297,7 @@ export default function App() {
   async function handleUpgrade() {
     setUpgrading(true)
     try {
-      const res = await axios.post('${API_URL}/api/billing/checkout/', {}, api(token))
+      const res = await axios.post(`${API_URL}/api/billing/checkout/`, {}, api(token))
       window.location.href = res.data.checkout_url
     } catch {
       alert('Could not start checkout. Try again.')
@@ -319,7 +319,7 @@ export default function App() {
     setUploading(true)
     const form = new FormData(); form.append('file', f)
     try {
-      const res = await axios.post('${API_URL}/api/documents/upload/', form, api(token))
+      const res = await axios.post(`${API_URL}/api/documents/upload/`, form, api(token))
       const newDoc = res.data
       setDocs(prev=>[newDoc,...prev])
       setSearchMode(false)
@@ -370,7 +370,7 @@ export default function App() {
     setSearching(true)
     setSearchResult(null)
     try {
-      const res = await axios.post('${API_URL}/api/documents/search/', { question: q }, api(token))
+      const res = await axios.post(`${API_URL}/api/documents/search/`, { question: q }, api(token))
       setSearchResult({ question: q, answer: res.data.answer, sources: res.data.sources || [] })
     } catch {
       setSearchResult({ question: q, answer: 'Something went wrong. Try again.', sources: [] })
@@ -407,7 +407,7 @@ export default function App() {
     try {
       const url = idsToExport
         ? `${API_URL}/api/documents/export/?ids=${idsToExport.join(',')}`
-        : '${API_URL}/api/documents/export/'
+        : `${API_URL}/api/documents/export/`
       const res = await axios.get('${API_URL}' + url, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
